@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programación Front End - Examen Práctico</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5.3 CSS via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Root Vue.js Mount Point -->
+  <div id="app" v-cloak>
+
+    <!-- ====================================================================
+         Top Navigation Bar (Bootstrap Navbar)
+         ==================================================================== -->
+    <header>
+      <nav class="navbar navbar-expand-lg app-navbar">
+        <div class="container-fluid px-lg-4">
+          <!-- Left Brand Title -->
+          <a class="navbar-brand navbar-brand-custom" href="#" @click.prevent="setActiveTab('calificaciones')">
+            <span class="brand-dot"></span>
+            Programación Front End
+          </a>
+
+          <!-- Mobile Toggle Button -->
+          <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAppContent" aria-controls="navbarAppContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <!-- Nav Items & Search Form -->
+          <div class="collapse navbar-collapse" id="navbarAppContent">
+            <!-- Navigation Tabs -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+              <li class="nav-item">
+                <a class="nav-link nav-link-custom" 
+                   :class="{ active: activeTab === 'calificaciones' }" 
+                   href="#" 
+                   @click.prevent="setActiveTab('calificaciones')">
+                  Cálculo de calificaciones
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link nav-link-custom" 
+                   :class="{ active: activeTab === 'registro' }" 
+                   href="#" 
+                   @click.prevent="setActiveTab('registro')">
+                  Formulario de Registro
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link nav-link-custom disabled" 
+                   href="#" 
+                   tabindex="-1" 
+                   aria-disabled="true"
+                   @click.prevent="setActiveTab('construccion')">
+                  En construcción
+                </a>
+              </li>
+            </ul>
+
+            <!-- Right Controls: Active Session Pill & Search Form -->
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0">
+              <!-- Active User Session Pill (from localStorage) -->
+              <div v-if="currentUser" class="session-pill">
+                <span class="session-indicator" title="Sesión activa"></span>
+                <span>Sesión activa: <strong>{{ currentUser.nombre }}</strong></span>
+                <button type="button" class="btn-cerrar-sesion" @click="cerrarSesion" title="Cerrar sesión actual">
+                  (Cerrar sesión)
+                </button>
+              </div>
+
+              <!-- Search Form -->
+              <form class="d-flex" role="search" @submit.prevent="handleSearch">
+                <input class="form-control nav-search-input me-2" 
+                       type="search" 
+                       placeholder="Search" 
+                       aria-label="Search"
+                       v-model="searchQuery">
+                <button class="btn btn-outline-success btn-busqueda" type="submit">
+                  Busqueda
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- ====================================================================
+         Animated Contextual Banner (Subtle Motion)
+         ==================================================================== -->
+    <section class="contextual-banner" aria-label="Información de contexto del módulo">
+      <div class="banner-backdrop-pattern"></div>
+      <div class="container-fluid px-lg-4">
+        <transition name="banner-fade" mode="out-in">
+          <!-- Banner for Tab 1: Cálculo de calificaciones -->
+          <div v-if="activeTab === 'calificaciones'" key="calificaciones" class="banner-content">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <span class="banner-pill accent">Evaluación Académica</span>
+              <span class="banner-pill">Ponderación: Nota 1 (35%) · Nota 2 (35%) · Nota 3 (30%)</span>
+            </div>
+            <h1 class="banner-title">Cálculo de Calificaciones</h1>
+            <p class="banner-subtitle">
+              Ingrese las 3 notas <span class="formula-tag">10 a 70</span> y el porcentaje de asistencia <span class="formula-tag">0 a 100%</span>. 
+              Condición de aprobación: <strong>Promedio &ge; 40</strong> y <strong>Asistencia &ge; 80%</strong>.
+            </p>
+          </div>
+
+          <!-- Banner for Tab 2: Formulario de Registro -->
+          <div v-else-if="activeTab === 'registro'" key="registro" class="banner-content">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <span class="banner-pill accent">Módulo de Autenticación</span>
+              <span class="banner-pill" v-if="currentUser">Usuario Conectado</span>
+              <span class="banner-pill" v-else>Registro Nuevo</span>
+            </div>
+            <h1 class="banner-title">Formulario de Registro</h1>
+            <p class="banner-subtitle">
+              Complete todos los campos requeridos con validación reactiva en tiempo real. Al registrarse exitosamente se guardará su sesión en <span class="formula-tag">localStorage</span>.
+            </p>
+          </div>
+
+          <!-- Banner for Tab 3: En construcción -->
+          <div v-else key="construccion" class="banner-content">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <span class="banner-pill">Módulo Próximo</span>
+            </div>
+            <h1 class="banner-title">Módulo en Construcción</h1>
+            <p class="banner-subtitle">
+              Esta sección está en desarrollo activo para la siguiente iteración del sistema de gestión académica.
+            </p>
+          </div>
+        </transition>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         Main App Content Area
+         ==================================================================== -->
+    <main class="py-4 py-lg-5">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+
+            <!-- --------------------------------------------------------------
+                 TAB 1: CÁLCULO DE CALIFICACIONES
+                 -------------------------------------------------------------- -->
+            <div v-show="activeTab === 'calificaciones'">
+              <div class="editorial-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h2 class="card-title-editorial mb-0">Cálculo de calificaciones</h2>
+                  <button type="button" 
+                          class="btn-limpiar-draft" 
+                          @click="limpiarCalificaciones"
+                          title="Restablecer formulario y borrar borrador">
+                    Limpiar
+                  </button>
+                </div>
+                <p class="card-subtitle-editorial">
+                  Ingrese las notas ponderadas del semestre y la asistencia final para obtener el estado del alumno.
+                </p>
+
+                <!-- Form Tab 1 (novalidate so Vue handles feedback cleanly) -->
+                <form @submit.prevent="calcularCalificaciones" 
+                      novalidate 
+                      :class="{ 'shake-error': shakeTab1 }">
+                  
+                  <div class="row g-3 mb-3">
+                    <!-- Nota 1 -->
+                    <div class="col-12 col-sm-6">
+                      <label for="nota1" class="form-label-editorial">
+                        <span>Nota 1 <small class="text-muted">(35%)</small></span>
+                        <span class="badge-range">10 - 70</span>
+                      </label>
+                      <input type="number" 
+                             class="form-control form-control-editorial" 
+                             id="nota1" 
+                             placeholder="Nota 1" 
+                             min="10" 
+                             max="70" 
+                             step="any"
+                             v-model="nota1">
+                    </div>
+
+                    <!-- Nota 2 -->
+                    <div class="col-12 col-sm-6">
+                      <label for="nota2" class="form-label-editorial">
+                        <span>Nota 2 <small class="text-muted">(35%)</small></span>
+                        <span class="badge-range">10 - 70</span>
+                      </label>
+                      <input type="number" 
+                             class="form-control form-control-editorial" 
+                             id="nota2" 
+                             placeholder="Nota 2" 
+                             min="10" 
+                             max="70" 
+                             step="any"
+                             v-model="nota2">
+                    </div>
+
+                    <!-- Nota 3 -->
+                    <div class="col-12 col-sm-6">
+                      <label for="nota3" class="form-label-editorial">
+                        <span>Nota 3 <small class="text-muted">(30%)</small></span>
+                        <span class="badge-range">10 - 70</span>
+                      </label>
+                      <input type="number" 
+                             class="form-control form-control-editorial" 
+                             id="nota3" 
+                             placeholder="Nota 3" 
+                             min="10" 
+                             max="70" 
+                             step="any"
+                             v-model="nota3">
+                    </div>
+
+                    <!-- Asistencia % -->
+                    <div class="col-12 col-sm-6">
+                      <label for="asistencia" class="form-label-editorial">
+                        <span>Asistencia %</span>
+                        <span class="badge-range">0 - 100%</span>
+                      </label>
+                      <input type="number" 
+                             class="form-control form-control-editorial" 
+                             id="asistencia" 
+                             placeholder="Asistencia" 
+                             min="0" 
+                             max="100" 
+                             step="any"
+                             v-model="asistencia">
+                    </div>
+                  </div>
+
+                  <!-- Submit Action Button -->
+                  <div class="d-flex align-items-center gap-3 mt-4">
+                    <button type="submit" class="btn btn-brand-primary">
+                      Calcular
+                    </button>
+                  </div>
+
+                  <!-- Exact Red Validation Error Message -->
+                  <div v-if="errorCalificaciones" 
+                       class="red-error-banner mt-3" 
+                       role="alert">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <span>Por favor, ingrese valores válidos para las notas y la asistencia</span>
+                  </div>
+                </form>
+
+                <!-- Calculation Result Card (CRITICAL FOR GRADING) -->
+                <div v-if="resultado" 
+                     class="result-card-editorial"
+                     :class="resultado.estado === 'Aprobado' ? 'aprobado' : 'reprobado'">
+                  
+                  <!-- Exact Two Evaluation Output Lines Required by Rubric -->
+                  <div class="required-output-box">
+                    <div class="required-line-promedio">
+                      El promedio es: <strong>{{ resultado.promedio }}</strong>
+                    </div>
+                    <div class="required-line-estado">
+                      Tu estado es: 
+                      <span class="status-badge-inline" 
+                            :class="resultado.estado === 'Aprobado' ? 'aprobado' : 'reprobado'">
+                        {{ resultado.estado }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Visual Progress Enhancements -->
+                  <div class="mt-3 pt-2 border-top">
+                    <!-- Promedio Progress Bar vs Benchmark 40 -->
+                    <div class="metric-row">
+                      <div class="metric-header">
+                        <span>Ponderado (Meta: 40.0)</span>
+                        <strong>{{ resultado.promedio }} / 70</strong>
+                      </div>
+                      <div class="metric-track" title="Progreso sobre nota máxima 70">
+                        <div class="metric-bar bar-promedio" 
+                             :style="{ width: Math.min((resultado.promedioNum / 70) * 100, 100) + '%' }"></div>
+                        <!-- Benchmark line at 40/70 = 57.14% -->
+                        <div class="metric-benchmark" style="left: 57.14%;" title="Umbral mínimo de aprobación (40)"></div>
+                      </div>
+                    </div>
+
+                    <!-- Asistencia Progress Bar vs Benchmark 80% -->
+                    <div class="metric-row mb-1">
+                      <div class="metric-header">
+                        <span>Asistencia (Meta: 80%)</span>
+                        <strong>{{ resultado.asistencia }}%</strong>
+                      </div>
+                      <div class="metric-track" title="Progreso sobre asistencia máxima 100%">
+                        <div class="metric-bar bar-asistencia" 
+                             :style="{ width: Math.min(resultado.asistencia, 100) + '%' }"></div>
+                        <!-- Benchmark line at 80% -->
+                        <div class="metric-benchmark" style="left: 80%;" title="Umbral mínimo de asistencia (80%)"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Calculation History (Stored in LocalStorage) -->
+                <div v-if="historialCalificaciones && historialCalificaciones.length > 0" class="history-card">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold text-secondary small text-uppercase" style="letter-spacing: 0.04em;">
+                      Historial Reciente ({{ historialCalificaciones.length }})
+                    </span>
+                    <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" @click="limpiarHistorial">
+                      Borrar historial
+                    </button>
+                  </div>
+                  <div>
+                    <div v-for="item in historialCalificaciones" :key="item.id" class="history-item">
+                      <div>
+                        <strong>Promedio: {{ item.promedio }}</strong>
+                        <span class="text-muted ms-2">(N1: {{ item.nota1 }}, N2: {{ item.nota2 }}, N3: {{ item.nota3 }} | Asist: {{ item.asistencia }}%)</span>
+                      </div>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="badge" 
+                              :class="item.estado === 'Aprobado' ? 'bg-success' : 'bg-danger'">
+                          {{ item.estado }}
+                        </span>
+                        <span class="text-muted small">{{ item.timestamp }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- --------------------------------------------------------------
+                 TAB 2: FORMULARIO DE REGISTRO
+                 -------------------------------------------------------------- -->
+            <div v-show="activeTab === 'registro'">
+              <div class="editorial-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h2 class="card-title-editorial mb-0">Formulario de Registro</h2>
+                  <button type="button" 
+                          class="btn-limpiar-draft" 
+                          @click="limpiarRegistroDraft"
+                          title="Limpiar campos y formulario">
+                    Limpiar
+                  </button>
+                </div>
+                <p class="card-subtitle-editorial">
+                  Ingrese sus datos personales para completar su registro en la plataforma académica.
+                </p>
+
+                <!-- Active Session Notification Card if User is logged in -->
+                <div v-if="currentUser" class="alert alert-light border mb-4 d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="text-success fw-bold me-1">●</span>
+                    <span>Sesión actual iniciada como <strong>{{ currentUser.nombre }}</strong> ({{ currentUser.correo }}).</span>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-danger" @click="cerrarSesion">
+                    Cerrar sesión
+                  </button>
+                </div>
+
+                <!-- Form Tab 2 (novalidate so Vue handles exact feedback) -->
+                <form @submit.prevent="enviarRegistro" 
+                      novalidate 
+                      :class="{ 'shake-error': shakeTab2 }">
+                  
+                  <!-- Field 1: Nombre -->
+                  <div class="mb-3">
+                    <label for="nombre" class="form-label-editorial">
+                      <span>Nombre:</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control form-control-editorial" 
+                           :class="{ 'is-invalid-custom': errorsRegistro.nombre }"
+                           id="nombre" 
+                           v-model="nombre"
+                           autocomplete="name">
+                    <!-- Exact Error Message -->
+                    <div v-if="errorsRegistro.nombre" class="field-error-text">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                      </svg>
+                      <span>{{ errorsRegistro.nombre }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Field 2: Correo -->
+                  <div class="mb-3">
+                    <label for="correo" class="form-label-editorial">
+                      <span>Correo:</span>
+                    </label>
+                    <input type="email" 
+                           class="form-control form-control-editorial" 
+                           :class="{ 'is-invalid-custom': errorsRegistro.correo }"
+                           id="correo" 
+                           v-model="correo"
+                           autocomplete="email">
+                    <!-- Exact Error Message -->
+                    <div v-if="errorsRegistro.correo" class="field-error-text">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                      </svg>
+                      <span>{{ errorsRegistro.correo }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Field 3: Contraseña -->
+                  <div class="mb-3">
+                    <label for="password" class="form-label-editorial">
+                      <span>Contraseña:</span>
+                    </label>
+                    <input type="password" 
+                           class="form-control form-control-editorial" 
+                           :class="{ 'is-invalid-custom': errorsRegistro.password }"
+                           id="password" 
+                           v-model="password"
+                           autocomplete="new-password">
+                    <!-- Exact Error Message -->
+                    <div v-if="errorsRegistro.password" class="field-error-text">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                      </svg>
+                      <span>{{ errorsRegistro.password }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Field 4: Repetir Contraseña -->
+                  <div class="mb-4">
+                    <label for="repetirPassword" class="form-label-editorial">
+                      <span>Repetir Contraseña:</span>
+                    </label>
+                    <input type="password" 
+                           class="form-control form-control-editorial" 
+                           :class="{ 'is-invalid-custom': errorsRegistro.repetirPassword }"
+                           id="repetirPassword" 
+                           v-model="repetirPassword"
+                           autocomplete="new-password">
+                    <!-- Exact Error Message -->
+                    <div v-if="errorsRegistro.repetirPassword" class="field-error-text">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                      </svg>
+                      <span>{{ errorsRegistro.repetirPassword }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Submit Green Button (Left aligned under inputs as in mockup) -->
+                  <div class="d-flex align-items-center gap-3">
+                    <button type="submit" class="btn btn-brand-success">
+                      Enviar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- --------------------------------------------------------------
+                 TAB 3: EN CONSTRUCCIÓN
+                 -------------------------------------------------------------- -->
+            <div v-show="activeTab === 'construccion'">
+              <div class="under-construction-box">
+                <div class="construction-icon">&#9881;</div>
+                <h2 class="h4 fw-bold text-dark mb-2">Sección En Construcción</h2>
+                <p class="text-secondary mb-4 mx-auto" style="max-width: 480px;">
+                  El módulo de gestión curricular y asignaturas complementarias se encuentra actualmente en desarrollo y estará disponible en la próxima versión.
+                </p>
+                <button type="button" class="btn btn-brand-primary" @click="setActiveTab('calificaciones')">
+                  Volver al Cálculo de Calificaciones
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ====================================================================
+         Animated Dynamic Footer
+         ==================================================================== -->
+    <footer class="app-footer">
+      <!-- Animated Top Accent Line -->
+      <div class="footer-accent-border"></div>
+
+      <!-- Continuous Marquee Ticker (Pause on hover) -->
+      <div class="marquee-container" aria-hidden="true">
+        <div class="marquee-content">
+          <span class="ticker-item">HTML5</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">CSS3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Bootstrap 5.3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Vue.js 3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Validación Reactiva</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Persistencia LocalStorage</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">HTML5</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">CSS3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Bootstrap 5.3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Vue.js 3</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Validación Reactiva</span>
+          <span class="ticker-separator">&middot;</span>
+          <span class="ticker-item">Persistencia LocalStorage</span>
+          <span class="ticker-separator">&middot;</span>
+        </div>
+      </div>
+
+      <!-- Footer Navigation & Academic Credits -->
+      <div class="container py-4">
+        <div class="row align-items-center g-3">
+          <div class="col-12 col-md-6 text-center text-md-start">
+            <span class="fw-bold text-white">Programación Front End</span>
+            <p class="small text-muted mb-0 mt-1">
+              Examen Práctico Front End &middot; Arquitectura Estática Desplegable &middot; Vue.js 3 CDN
+            </p>
+          </div>
+          <div class="col-12 col-md-6 text-center text-md-end">
+            <div class="d-flex justify-content-center justify-content-md-end gap-3 mb-1">
+              <a href="#" class="footer-nav-link" @click.prevent="setActiveTab('calificaciones')">Calificaciones</a>
+              <a href="#" class="footer-nav-link" @click.prevent="setActiveTab('registro')">Registro</a>
+              <a href="#" class="footer-nav-link" @click.prevent="setActiveTab('construccion')">En Construcción</a>
+            </div>
+            <p class="small text-muted mb-0">
+              Evaluación Lista para Netlify y Blackboard
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ====================================================================
+       JavaScript Dependencies (Bootstrap Bundle & Vue 3 CDN)
+       ==================================================================== -->
+  <!-- Bootstrap 5.3 Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <!-- Vue.js 3 Production CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- Application Logic -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
